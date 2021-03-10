@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import yaml from "js-yaml";
 import { propertyOf } from "underscore";
 import "./styles/tailwind.css";
+import { diffChars } from "diff";
 
 const defaultYaml = `hello:
   from:
@@ -34,6 +35,7 @@ function App() {
     getDeepKeys(parsedDefaultYaml)
   );
   const [search, setSearch] = useState("");
+  const [comparison, setComparison] = useState("");
 
   const updateYaml = (text: string) => {
     if (text !== "") {
@@ -42,6 +44,24 @@ function App() {
       setParsedYaml(loadedYaml);
       setKeys(getDeepKeys(loadedYaml));
     }
+  };
+
+  const renderComparison = (foundValue: string) => {
+    if (foundValue === comparison) {
+      return <span className="text-green-600">Values match! 🎉</span>;
+    }
+    return diffChars(foundValue, comparison).map(
+      ({ added, count, removed, value }) => {
+        if (removed) {
+          return <span className="text-red-600">{value}</span>;
+        }
+        if (added) {
+          return <span className="text-green-600">{value}</span>;
+        }
+
+        return <span>{value}</span>;
+      }
+    );
   };
 
   const exactMatch = (parts: Array<string>) => {
@@ -55,6 +75,21 @@ function App() {
           <pre className="bg-gray-200 p-4 rounded mt-4">
             <code>{JSON.stringify(foundValue, null, 2)}</code>
           </pre>
+
+          <div className="mt-2">
+            <p>Compare your path here:</p>
+
+            <input
+              type="text"
+              className="appearance-none border border-gray-400 rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              placeholder="Compare a key"
+              onChange={(e) => setComparison(e.currentTarget.value)}
+            />
+
+            <pre className="bg-gray-200 p-4 rounded mt-4 font-bold">
+              <code>{renderComparison(parts.join("."))}</code>
+            </pre>
+          </div>
         </div>
       );
     }
